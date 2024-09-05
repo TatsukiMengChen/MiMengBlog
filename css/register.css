@@ -1,0 +1,44 @@
+html {
+	height: 100%;
+}
+
+body {
+	height: 100%;
+}
+
+#logo {
+	margin-top: 20px;
+	width: 60px;
+	height: 60px;
+}
+
+#app {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+#register {
+	padding: 20px;
+	margin: 20px;
+	max-width: 400px;
+	width: calc(100% - 40px);
+	min-width: 300px;
+	background-color: #FFFFFF;
+	border-radius: 8px;
+}
+
+.register-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#captcha .geetest_holder {
+	width: 100%;
+}
+
+#captcha {
+	margin-bottom: .75rem;
+}

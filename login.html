@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>迷梦Blog | 登录</title>
+    	<link rel="shortcut icon" href="./images/logo.png">
+		<script src="./js/gt4.js"></script>
+		<link href="./css/bulma.min.css" rel="stylesheet">
+		<link rel="stylesheet" href="/css/Qmsg.min.css">
+		<link rel="stylesheet" type="text/css" href="./css/login.css">
+	</head>
+	<body>
+		<div id="app">
+			<img id="logo" src="./images/logo.png">
+			<div id="login" class="box">
+				<h5 class="title is-5">登录迷梦Blog</h5>
+				<form action="" method="POST">
+					<div class="field">
+						<label class="label">账号</label>
+						<div class="control">
+							<input class="input is-primary" id="login-id" type="text" placeholder="请输入账号">
+							<p class="help is-danger" style="display: none">请输入6~20位的合法账号，仅支持大小写字母、数字、下划线。</p>
+						</div>
+					</div>
+					<div class="field">
+						<label class="label">密码</label>
+						<div class="control">
+							<input class="input is-primary" id="login-password" type="password" placeholder="请输入密码" value="">
+							<p class="help is-danger" style="display: none">请输入8~20位的密码，可包含大小写字母、数字和特殊字符。</p>
+						</div>
+					</div>
+					<div id="captcha"></div>
+					<button type="submit" id="login-button" class="button is-fullwidth is-primary is-light">登录</button>
+					<br>
+					<div class="field">
+						<div class="control login-bottom">
+							<label class="checkbox">
+								<input type="checkbox" class="is-primary" id="login-check">
+								我已阅读并同意<a href="./privacy.html" id="login-privacy">隐私政策</a>
+							</label>
+							<p class="help is-danger" style="display: none">请先仔细阅读并同意我们的隐私政策，然后再进行勾选同意操作。</p>
+							<br>
+							<div>没有账号？<a href="./register.html" id="login-register">点我注册</a></div>
+						</div>
+					</div>
+				</form>
+			</div>
+		</div>
+		<script src="./js/jquery-3.7.1.min.js"></script>
+		<script src="./js/Qmsg.min.js"></script>
+		<script src="./js/core.js"></script>
+		<script src="./js/login.js"></script>
+	</body>
+</html>
