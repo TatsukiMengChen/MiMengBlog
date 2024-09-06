@@ -54,7 +54,7 @@ const urlParams = getURLParams();
 
 if (urlParams.id) {
     var settings = {
-        "url": `http://localhost:3000/article?act=getContent&id=${urlParams['id']}`,
+        "url": `${CoreURL}article?act=getContent&id=${urlParams['id']}`,
         "method": "GET",
         "timeout": 0
     }
@@ -86,7 +86,7 @@ if (urlParams.id) {
 
 if (urlParams.account && urlParams.token) {
     var settings = {
-        "url": `http://localhost:3000/account?act=validateToken&id=${urlParams.account}`,
+        "url": `${CoreURL}user?act=validateToken&id=${urlParams.account}`,
         "method": "GET",
         "timeout": 0,
         "headers": {
