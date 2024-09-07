@@ -216,6 +216,129 @@ const nav = {
 
 nav.init()
 
+const Content = {
+    notice: $("#notice-content"),
+    noticeTIme: $("#notice-time"),
+    loadNotice: function () {
+        Core.Content.getNotice().then(function (res) {
+            $(Content.notice).text(res.content)
+            $(Content.noticeTIme).text(getTimeAgo(res.publishDate))
+        })
+    },
+    init: function () {
+        this.loadNotice()
+    }
+}
+
+Content.init()
+
+Article = {
+    list: {},
+    openArticle: function (id) {
+        window.open(`/article.html?id=${id}`)
+    },
+    getArticles: function (list) {
+        return Core.Article.getArticles(list)
+    },
+    getRecommendedArticles: function () {
+        return Core.Content.getRecommendedArticles()
+    },
+    getArticleModule: function (id) {
+        return $(`div[articleID=${id}]`)
+    },
+    addArticle: function (data) {
+        //判断文章是否已经添加
+        if (this.list[data.id]) {
+            return;
+        }
+        this.list[data.id] = data;
+        $("#article-list").append(`
+            <div class="article module" articleid=${data.id}>
+                    <div class="author">
+                        <img class="people-head" src="${data.head}">
+                        <div class="container">
+                            <div class="name people-name">${data.name}
+                                <img class="vip" src="./images/icon/VIP-active.svg">
+                            </div>
+                            <div>
+                                <span class="time">${getTimeAgo(data.updateDate)}</span>
+                                <span class="badge official">官方</span>
+                                <span class="badge selected">精选</span>
+                                <span class="badge top">置顶</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="title">${data.title}</div>
+                    <div class="tags">
+                    </div>
+                    <div class="outline">${data.outline}</div>
+                    <div class="images">
+                        <div class="more"></div>
+                    </div>
+                    <div class="line"></div>
+                    <div class="bottom">
+                        <div class="item hot">
+                            <img src="./images/icon/hot.svg">
+                            <span class="count">${data.views}</span>
+                        </div>
+                        <div class="item likes">
+                            <img src="./images/icon/like.svg">
+                            <span class="count">${data.likes}</span>
+                        </div>
+                        <div class="item comments">
+                            <img src="./images/icon/comment.svg">
+                            <span class="count">${data.comments}</span>
+                        </div>
+                        <div class="item stars">
+                            <img src="./images/icon/star.svg">
+                            <span class="count">${data.stars}</span>
+                        </div>
+                    </div>
+                </div>
+            `)
+        var article = Article.getArticleModule(data.id)
+        if (data.isVIP) {
+            article.find(".vip").show()
+        }
+        if (data.official) {
+            article.find(".badge.official").css("display", "inline-block")
+        }
+        if (data.selected) {
+            article.find(".badge.selected").css("display", "inline-block")
+        }
+        if (data.top) {
+            article.find(".badge.top").css("display", "inline-block")
+        }
+        for (let i = 0; i < data.tags.length; i++) {
+            article.find(".tags").append(`<span class="tag">#${data.tags[i]}</span>`)
+        }
+        for (let i = 0; i < data.images.length && i < 3; i++) {
+            article.find(".images").append(`
+                <div class="img">
+                    <img src="${data.images[i]}">
+                </div>`)
+        }
+        if (data.images.length > 3) {
+            article.find(".more").show().text("+" + (data.images.length - 3))
+        }
+    },
+    init: async function () {
+        $("#article-list").on("click", ".article .title",function () {
+            //获取当前文章的id
+            var id = $(this).parent().attr("articleid")
+            Article.openArticle(id)
+        })
+
+        var recommendedArticleIDs = await Article.getRecommendedArticles()
+        var recommendedArticles = await Article.getArticles(recommendedArticleIDs)
+        console.log(recommendedArticles)
+        for (let i in recommendedArticles) {
+            this.addArticle(recommendedArticles[i])
+        }
+    }
+}
+
+Article.init()
 
 function isSameDay(date1, date2) {
     const d1 = new Date(date1);
@@ -248,4 +371,3 @@ function getTimeAgo(unixTime) {
             + date.getDate().toString().padStart(2, '0');
     }
 }
-

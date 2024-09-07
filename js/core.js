@@ -2,7 +2,9 @@
 const CoreURL = "http://localhost:3000/";
 
 const Core = {
-    User: {}
+    User: {},
+    Content: {},
+    Article: {},
 }
 
 Core.login = async function (id, password, result) {
@@ -92,6 +94,41 @@ Core.User.getMyFollow = async function (id, token) {
 
     return $.ajax(settings)
 
+}
+
+Core.Content.getNotice = async function () {
+    var settings = {
+        "url": CoreURL + "content?act=getNotice",
+        "method": "GET",
+        "timeout": 0,
+    };
+
+    return $.ajax(settings)
+}
+
+Core.Content.getRecommendedArticles = async function () {
+    var settings = {
+        "url": CoreURL + "content?act=getRecommendedArticles",
+        "method": "GET",
+        "timeout": 0,
+    }
+
+    return $.ajax(settings)
+}
+
+Core.Article.getArticles = async function (list) {
+    if (typeof list == "object") {
+        var ids = JSON.stringify(list)
+    } else {
+        var ids = list
+    }
+    var settings = {
+        "url": CoreURL + "article?act=getArticles&list=" + ids,
+        "method": "GET",
+        "timeout": 0,  
+    }
+
+    return $.ajax(settings)
 }
 
 function getCookie(cname) {

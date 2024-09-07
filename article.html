@@ -11,41 +11,93 @@
 </head>
 
 <body>
-    <div id="header">
-        <div id="author-info">
-            <div id="author-info-container">
-                <img id="author-head" src="./images/head.png">
-                <div class="container">
-                    <div id="author-name-container">
-                        <span id="author-name">作者名称</span>
-                    </div>
-                    <div id="author-date">2024-01-01</div>
-                </div>
+    <div id="nav">
+        <div id="nav-left">
+            <div id="nav-left-logo">
+                <img src="images/logo.png" alt="logo">
             </div>
-            <div id="author-follow">
-                <img id="author-follow-img" src="./images/add.svg">
-                <span id="author-follow-text">关注</span>
+            <div id="nav-left-title">
+                <h2>迷梦Blog</h2>
+            </div>
+            <div id="nav-left-menu">
+                <div class="container">
+                    <div id="nav-left-menu-home" class="item">首页</div>
+                    <div id="nav-left-menu-user" class="item">我的</div>
+                    <div id="nav-left-menu-detail" class="item">文章详细</div>
+                    <div id="nav-left-menu-admin" class="item" style="display: none;">管理</div>
+                </div>
+                <div id="nav-left-menu-indicator"></div>
+            </div>
+        </div>
+        <div id="nav-center">
+            <div class="search-container">
+                <form id="search-form">
+                    <input type="text" placeholder="搜索些什么..." id="search-input">
+                </form>
+                <button id="search-button">
+                    <img src="./images/icon/search.svg" alt="Search" class="search-icon"> <!-- 使用图片作为搜索图标 -->
+                </button>
+            </div>
+        </div>
+        <div id="nav-right">
+            <div id="nav-right-user">
+                <img id="nav-right-user-head" src="./images/head.png" alt="head">
+                <div id="nav-right-user-name" style="display: none;">请登录</div>
             </div>
         </div>
     </div>
-    <div id="content"></div>
-    <div id="footer"></div>
-    <div id="comment"></div>
-    <div id="menu">
-        <div id="menu-make-comment">我有话要说...</div>
-        <div id="menu-ctrl">
-            <div id="menu-likes" class="container">
-                <img id="menu-likes-img" src="./images/icon/like.svg">
-                <span id="menu-likes-count" class="count">0</span>
+    <div id="main">
+        <div id="main-left"></div>
+        <div id="main-center">
+            <div class="module">
+                <div id="header">
+                    <div id="author-info">
+                        <div id="author-info-container">
+                            <img id="author-head" src="./images/head.png">
+                            <div class="container">
+                                <div id="author-name-container">
+                                    <span id="author-name">作者名称</span>
+                                </div>
+                                <div id="author-date">2024-01-01</div>
+                            </div>
+                        </div>
+                        <div id="author-follow">
+                            <img id="author-follow-img" src="./images/add.svg">
+                            <span id="author-follow-text">关注</span>
+                        </div>
+                    </div>
+                </div>
+                <div id="content"></div>
+                <div id="comment"></div>
             </div>
-            <div id="menu-comments" class="container">
-                <img id="menu-comments-img" src="./images/icon/comment.svg">
-                <span id="menu-comments-count" class="count">0</span>
+        </div>
+        <div id="main-right"></div>
+        <div id="footer">
+            <div id="footer-left"></div>
+            <div id="footer-center">
+                <div id="menu">
+                    <div id="menu-make-comment">我有话要说...</div>
+                    <div id="menu-ctrl">
+                        <div id="menu-hot" class="container">
+                            <img src="./images/icon/hot.svg">
+                            <span id="menu-hot-count" class="count">0</span>
+                        </div>
+                        <div id="menu-likes" class="container">
+                            <img id="menu-likes-img" src="./images/icon/like.svg">
+                            <span id="menu-likes-count" class="count">0</span>
+                        </div>
+                        <div id="menu-comments" class="container">
+                            <img id="menu-comments-img" src="./images/icon/comment.svg">
+                            <span id="menu-comments-count" class="count">0</span>
+                        </div>
+                        <div id="menu-stars" class="container">
+                            <img id="menu-stars-img" src="./images/icon/star.svg">
+                            <span id="menu-stars-count" class="count">0</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div id="menu-stars" class="container">
-                <img id="menu-stars-img" src="./images/icon/star.svg">
-                <span id="menu-stars-count" class="count">0</span>
-            </div>
+            <div id="footer-right"></div>
         </div>
     </div>
     <script src="./js/jquery-3.7.1.min.js"></script>
