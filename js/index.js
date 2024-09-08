@@ -149,10 +149,27 @@ const Content = {
             </div>`)
             $("#main-center").append(noticeElement)
             noticeElement.hide().fadeIn(500);
+            $("#edit-publish").hide()
+            $("#edit-update").hide()
+            $("#edit-delete").hide()
             this.notice = $("#notice-content")
             this.noticeTime = $("#notice-time")
             this.loadNotice()
             this.loadHotTags()
+        } else if (page == "user") {
+            var editElement = $(`
+            <div class="module">
+                <input type="text" placeholder="标题" id="edit-title" class="input" autocomplete="off">
+                <input type="text" placeholder="概述" id="edit-outline" class="input" autocomplete="off">
+                <input type="text" placeholder="标签：例如 #标签1 #标签2" id="edit-tags" class="input" autocomplete="off">
+                <textarea type="text" placeholder="封面图，请输入图片链接，每行一个，建议1~3个" id="edit-images" class="input" autocomplete="off"></textarea>
+                <textarea type="text" placeholder="正文，支持Markdown语法" id="edit-content" class="input" autocomplete="off"></textarea>
+            </div>`)
+            $("#main-center").append(editElement)
+            editElement.hide().fadeIn(500);
+            $("#edit-publish").fadeIn(500);
+            $("#edit-update").hide()
+            $("#edit-delete").hide()
         }
     }
 }
@@ -166,12 +183,50 @@ Article = {
     },
     publishArticle: async function (title, content, tags, outline, images) {
         if (User.isLogin()) {
+            var loading = Qmsg.loading("正在发布文章")
             var id = getCookie("id")
             var token = getCookie("token")
             var res = await Core.Article.publishArticle(id, token, title, content, tags, outline, images)
             if (res.code == 0) {
+                loading.close()
                 Qmsg.success("发布成功")
+            } else if (res.code == 1) {
+                loading.close()
+                Qmsg.error("请等待一分钟后发布")
             }
+        } else {
+            Qmsg.warning("请先登录")
+        }
+    },
+    updateArticle: async function (id, title, content, tags, outline, images) {
+        if (User.isLogin()) {
+            var loading = Qmsg.loading("正在更新文章")
+            var userID = getCookie("id")
+            var token = getCookie("token")
+            var res = await Core.Article.editArticle(userID, token, id, title, content, tags, outline, images)
+            if (res.code == 0) {
+                loading.close()
+                Qmsg.success("更新成功")
+            } else if (res.code == 1) {
+                loading.close()
+                Qmsg.error("请等待一分钟后更新")
+            }
+        } else {
+            Qmsg.warning("请先登录")
+        }
+    },
+    deleteArticle: async function (id) {
+        if (User.isLogin()) {
+            var loading = Qmsg.loading("正在删除文章")
+            var userID = getCookie("id")
+            var token = getCookie("token")
+            var res = await Core.Article.deleteArticle(userID, token, id)
+            if (res.code == 0) {
+                loading.close()
+                Qmsg.success("删除成功")
+            }
+        } else {
+            Qmsg.warning("请先登录")
         }
     },
     clear: function () {
@@ -198,6 +253,9 @@ Article = {
             Qmsg.warning("请先登录")
         }
     },
+    getContent: async function (id) {
+        return Core.Article.getContent(id)
+    },
     openArticle: function (id) {
         window.open(`/article.html?id=${id}`)
     },
@@ -217,7 +275,8 @@ Article = {
         }
         this.list[data.id] = data;
         var articleElement = $(`
-            <div class="article module" articleid=${data.id}>
+                <div class="article module" articleid=${data.id}>
+                    <img class="edit" src="./images/icon/edit.svg">
                     <div class="author">
                         <img class="people-head" src="${data.head}">
                         <div class="container">
@@ -290,6 +349,11 @@ Article = {
         if (data.liked) {
             article.find(".likes img").attr("src", "./images/icon/like-filling.svg")
         }
+        var page = getUrlParam("page")
+        var id = getUrlParam("id")
+        if (page == "user" && id == data.authorId) {
+            article.find(".edit").show()
+        }
     },
     init: async function (page, noSortOrder) {
         if (page == "home") {
@@ -320,13 +384,17 @@ Article = {
                 for (let i in this.list) {
                     this.addArticle(this.list[i], true)
                 }
+                if (this.list.length >= 10) {
+                    $("#article-list").append(`<div class="module" id="article-more">加载更多</div>`)
+                } else {
+                    $("#article-list").append(`<div id="article-empty">到底了（；´д｀）ゞ</div>`)
+                }
                 return
             }
             var recommendedArticleIDs = await Article.getRecommendedArticles()
             if (await User.isLogin()) {
                 var id = getCookie("id")
                 var token = getCookie("token")
-                console.log(id, token)
                 var recommendedArticles = await Article.getArticles(recommendedArticleIDs, id, token)
             } else {
                 var recommendedArticles = await Article.getArticles(recommendedArticleIDs)
@@ -335,7 +403,41 @@ Article = {
                 recommendedArticles[i].top = true
                 this.addArticle(recommendedArticles[i])
             }
+            Search.keyword = ""
+            Search.sort = "hot"
+            Search.reverse = false
             Search.searchArticles()
+        } else if (page == "user") {
+            if (!noSortOrder) {
+                var sortOrderElement = $(`
+                    <div id="sort-order" class="module">
+                        <div id="sort-order-default" class="item">默认</div>
+                        <div id="sort-order-hot" class="item">热门</div>
+                        <div id="sort-order-time" class="item active">时间</div>
+                    </div>`)
+                $("#main-center").append(sortOrderElement)
+                sortOrderElement.hide().fadeIn(500)
+                $("#sort-order-time").click(function () {
+                    Article.removeSortOrder()
+                    $(this).addClass("active")
+                })
+            }
+            $("#sort-order-hot").click(function () {
+                Article.removeSortOrder()
+                $(this).addClass("active")
+            })
+            $("#sort-order-time").click(function () {
+                Article.removeSortOrder()
+                $(this).addClass("active")
+            })
+            $("#main-center").append(`<div id="article-list"></div>`)
+            if (await User.isLogin()) {
+                Search.keyword = getCookie("id")
+                Search.sort = "time"
+                Search.reverse = false
+                Search.searchArticlesByAuthor()
+            }
+
         }
     }
 }
@@ -358,11 +460,12 @@ $("#main-center").on("click", "#sort-order .item", function () {
     $("#sort-order .item").removeClass("active")
     $(this).addClass("active")
     Article.clear()
+    var page = getUrlParam("page")
     if ($(this).attr("id") == "sort-order-default") {
         Search.page = 1
         Search.sort = "hot"
         Search.reverse = false
-        Article.init("home", true)
+        Article.init(page, true)
         return
     } else if ($(this).attr("id") == "sort-order-hot") {
         Search.page = 1
@@ -373,15 +476,41 @@ $("#main-center").on("click", "#sort-order .item", function () {
         Search.sort = "time"
         Search.reverse = false
     }
-    Search.searchArticles()
+    if (page == "home") {
+        Search.searchArticles()
+    } else if (page == "user") {
+        Search.searchArticlesByAuthor()
+    }
 })
 
-$("#publish-button").click(function () {
-    var title = $("#publish-title").val();
-    var content = $("#publish-content").val();
-    var outline = $("#publish-outline").val();
-    var tags = extractTags($("#publish-tags").val());
-    var images = extractImages($("#publish-images").val());
+$("#main-center").on("click", ".article .edit", async function () {
+    var id = $(this).parent().attr("articleid")
+    Article.currentArticleID = id
+    var loading = Qmsg.loading("正在加载文章信息...")
+    var article = await Article.getContent(id)
+    $("#edit-title").val(article.title)
+    $("#edit-content").val(article.content)
+    console.log(article.outline)
+    $("#edit-outline").val(article.outline)
+    $("#edit-tags").val("")
+    for (let i in article.tags) {
+        $("#edit-tags").val($("#edit-tags").val() + "#" + article.tags[i] + " ")
+    }
+    $("#edit-images").val("")
+    for (let i in article.images) {
+        $("#edit-images").val($("#edit-images").val() + article.images[i] + "\n")
+    }
+    loading.close()
+    $("#edit-update").show()
+    $("#edit-delete").show()
+})
+
+$("#edit-publish").click(function () {
+    var title = $("#edit-title").val();
+    var content = $("#edit-content").val();
+    var outline = $("#edit-outline").val();
+    var tags = extractTags($("#edit-tags").val());
+    var images = extractImages($("#edit-images").val());
     if (title.length < 5) {
         Qmsg.error("标题长度不能少于5个字符");
         return;
@@ -397,29 +526,92 @@ $("#publish-button").click(function () {
     Article.publishArticle(title, content, tags, outline, images);
 })
 
+$("#edit-update").click(function () {
+    var title = $("#edit-title").val();
+    var content = $("#edit-content").val();
+    var outline = $("#edit-outline").val();
+    var tags = extractTags($("#edit-tags").val());
+    var images = extractImages($("#edit-images").val());
+    if (title.length < 5) {
+        Qmsg.error("标题长度不能少于5个字符");
+        return;
+    }
+    if (content.length < 10) {
+        Qmsg.error("内容长度不能少于10个字符");
+        return;
+    }
+    if (outline.length < 10) {
+        Qmsg.error("概述长度不能少于10个字符");
+        return;
+    }
+    Article.updateArticle(Article.currentArticleID, title, content, tags, outline, images);
+})
+
+$("#edit-delete").click(function () {
+    Article.deleteArticle(Article.currentArticleID);
+})
+
+$("#hot-tags-list").on("click", ".name", function () {
+    Search.keyword = $(this).text()
+    Search.sort = "hot"
+    Search.reverse = false
+    Search.page = 1
+    Article.clear()
+    Search.searchArticlesByTag()
+})
+
 const Search = {
     keyword: "",
     page: 1,
     sort: "hot",
     reverse: false,
+    loadMore: function (articles) {
+        console.log(articles)
+        if (articles.length > 0) {
+            for (let i in articles) {
+                Article.addArticle(articles[i])
+            }
+            if (articles.length >= 10) {
+                $("#article-list").append(`<div class="module" id="article-more">加载更多</div>`)
+            } else {
+                $("#article-list").append(`<div id="article-empty">到底了（；´д｀）ゞ</div>`)
+            }
+        } else {
+            $("#article-list").append(`<div id="article-empty">到底了（；´д｀）ゞ</div>`)
+        }
+    },
     searchArticles: async function () {
         var id = getCookie("id");
         var token = getCookie("token");
         var articles
         if (await User.isLogin()) {
-            console.log(id, token)
             articles = await Core.Search.searchArticles(this.keyword, this.page, this.sort, this.reverse, id, token)
         } else {
             articles = await Core.Search.searchArticles(this.keyword, this.page, this.sort, this.reverse)
         }
-        if (articles.length > 0) {
-            for (let i in articles) {
-                Article.addArticle(articles[i])
-            }
-            $("#article-list").append(`<div class="module" id="article-more">加载更多</div>`)
+        this.loadMore(articles)
+    },
+    searchArticlesByTag: async function () {
+        var id = getCookie("id");
+        var token = getCookie("token");
+        var articles
+        if (await User.isLogin()) {
+            articles = await Core.Search.searchArticlesByTag(this.keyword, this.page, this.sort, this.reverse, id, token)
         } else {
-            $("#article-list").append(`<div id="article-empty">到底了（；´д｀）ゞ</div>`)
+            articles = await Core.Search.searchArticlesByTag(this.keyword, this.page, this.sort, this.reverse)
         }
+        this.loadMore(articles)
+    },
+    searchArticlesByAuthor: async function () {
+        var id = getCookie("id");
+        var token = getCookie("token");
+        var articles
+        if (await User.isLogin()) {
+            articles = await Core.Search.searchArticlesByAuthor(this.keyword, this.page, this.sort, this.reverse, id, token)
+        } else {
+            articles = await Core.Search.searchArticlesByAuthor(this.keyword, this.page, this.sort, this.reverse)
+        }
+        this.loadMore(articles)
     }
 }
 
@@ -480,10 +672,13 @@ const nav = {
             setUrlParam("page", "home");
             $("#hot-tags").show();
             Content.init("home");
+            Article.list = [];
             Article.init("home");
         } else if (item.attr("id") == this.items.user.attr("id")) {
             setUrlParam("page", "user");
             Content.init("user");
+            Article.list = [];
+            Article.init("user");
             autosize($("textarea"))
         } else if (item.attr("id") == this.items.admin.attr("id")) {
             setUrlParam("page", "admin");
@@ -527,9 +722,22 @@ const nav = {
 
         this.search.button.click(async function () {
             if (await User.isLogin()) {
+                Article.clear();
                 var keyword = nav.search.input.val();
-                Search.keyword = keyword;
-                Qmsg.info("暂不支持搜索哦~")
+                var firstChar = keyword.charAt(0);
+                if (firstChar == "#") {
+                    keyword = keyword.substring(1);
+                    Search.keyword = keyword;
+                    Search.searchArticlesByTag()
+                } else if (firstChar == "@") {
+                    console.log("author")
+                    keyword = keyword.substring(1);
+                    Search.keyword = keyword;
+                    Search.searchArticlesByAuthor()
+                } else {
+                    Search.keyword = keyword;
+                    Search.searchArticles()
+                }
             } else {
                 Qmsg.warning("请先登录")
             }
@@ -546,7 +754,6 @@ const nav = {
                     zIndexOfMask: 3008,
                     zIndexOfActiveModal: 3020
                 }).onClose((isOk, cc, done) => {
-                    console.log(cc.closeType);
                     if (isOk) {
                         User.logout()
                     } else {

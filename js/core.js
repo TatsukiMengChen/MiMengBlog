@@ -127,8 +127,17 @@ Core.Content.getHotTags = async function () {
     return $.ajax(settings)
 }
 
+Core.Article.getContent = async function (id) {
+    var settings = {
+        "url": CoreURL + "article?act=getContent&id=" + id,
+        "method": "GET",
+        "timeout": 0,
+    };
+
+    return $.ajax(settings)
+}
+
 Core.Article.getArticles = async function (list, userID, token) {
-    console.log(list, userID, token)
     if (typeof list == "object") {
         var ids = JSON.stringify(list)
     } else {
@@ -169,7 +178,7 @@ Core.Article.modifyLike = async function (id, userID, token) {
 
 Core.Article.publishArticle = async function (id, token, title, content, tags, outline, images) {
     var settings = {
-        "url": CoreURL + "article?act=publishArticle&id=" + id + "&token=" + token + "&title=" + title + "&content=" + content + "&tags=" + tags + "&outline=" + outline + "&images=" + images,
+        "url": CoreURL + "article?act=publishArticle&id=" + id + "&title=" + encodeURIComponent(title) + "&content=" + encodeURIComponent(content) + "&tags=" + JSON.stringify(tags) + "&outline=" + encodeURIComponent(outline) + "&images=" + JSON.stringify(images),
         "method": "GET",
         "timeout": 0,
         "headers": {
@@ -178,6 +187,33 @@ Core.Article.publishArticle = async function (id, token, title, content, tags, o
     };
 
     return $.ajax(settings)
+}
+
+Core.Article.editArticle = async function (userID, token, id, title, content, tags, outline, images) {
+    var settings = {
+        "url": CoreURL + "article?act=editArticle&userID=" + userID + "&id=" + id + "&title=" + encodeURIComponent(title) + "&content=" + encodeURIComponent(content) + "&tags=" + JSON.stringify(tags) + "&outline=" + encodeURIComponent(outline) + "&images=" + JSON.stringify(images),
+        "method": "GET",
+        "timeout": 0,
+        "headers": {
+            "Authorization": "Bearer " + token
+        }
+    }
+
+    return $.ajax(settings)
+}
+
+Core.Article.deleteArticle = async function (userID, token, id) {
+    var settings = {
+        "url": CoreURL + "article?act=deleteArticle&userID=" + userID + "&id=" + id,
+        "method": "GET",
+        "timeout": 0,
+        "headers": {
+            "Authorization": "Bearer " + token
+        }
+    };
+
+    return $.ajax(settings)
+    
 }
 
 Core.Search.searchArticles = async function (keyword, page, sort, reverse, id, token) {
@@ -196,6 +232,49 @@ Core.Search.searchArticles = async function (keyword, page, sort, reverse, id, t
             "method": "GET",
             "timeout": 0,
         };
+    }
+
+    return $.ajax(settings)
+}
+
+Core.Search.searchArticlesByTag = async function (keyword, page, sort, reverse, id, token) {
+    if (id && token) {
+        var settings = {
+            "url": CoreURL + "search?act=searchArticlesByTag&keyword=" + keyword + "&page=" + page + "&sort=" + sort + "&reverse=" + reverse + "&id=" + id,
+            "method": "GET",
+            "timeout": 0,
+            "headers": {
+                "Authorization": "Bearer " + token
+            },
+        }
+    } else {
+        var settings = {
+            "url": CoreURL + "search?act=searchArticlesByTag&keyword=" + keyword + "&page=" + page + "&sort=" + sort + "&reverse=" + reverse,
+            "method": "GET",
+            "timeout": 0,
+        };
+    }
+
+    return $.ajax(settings)
+}
+
+Core.Search.searchArticlesByAuthor = async function (keyword, page, sort, reverse, id, token) {
+    if (id && token) {
+        var settings = {
+            "url": CoreURL + "search?act=searchArticlesByAuthor&keyword=" + keyword + "&page=" + page + "&sort=" + sort + "&reverse=" + reverse + "&id=" + id,
+            "method": "GET",
+            "timeout": 0,
+            "headers": {
+                "Authorization": "Bearer " + token
+            },
+        }
+    }
+    else {
+        var settings = {
+            "url": CoreURL + "search?act=searchArticlesByAuthor&keyword=" + keyword + "&page=" + page + "&sort=" + sort + "&reverse=" + reverse,
+            "method": "GET",
+            "timeout": 0,
+        }
     }
 
     return $.ajax(settings)
