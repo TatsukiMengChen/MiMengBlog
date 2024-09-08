@@ -15,21 +15,27 @@ const User = {
         name: $("#user-info-name"),
         vip: $("#user-info-vip")
     },
+    checked: false,
     isLogin: async function () {
         var id = getCookie("id");
         var token = getCookie("token");
-        if (id && token) {
-            try {
-                const res = await Core.User.validateToken(id, token);
-                if (res.code == 0) {
-                    return true;
-                } else {
+        if (id != '' && token != '') {
+            if (!this.checked) {
+                this.checked = true;
+                try {
+                    const res = await Core.User.validateToken(id, token);
+                    if (res.code == 0) {
+                        return true;
+                    } else {
+                        Qmsg.error("账号登录信息已过期，请重新登录");
+                        return false;
+                    }
+                } catch (err) {
                     Qmsg.error("账号登录信息已过期，请重新登录");
                     return false;
                 }
-            } catch (err) {
-                Qmsg.error("账号登录信息已过期，请重新登录");
-                return false;
+            } else {
+                return true;
             }
         } else {
             return false;
@@ -92,153 +98,111 @@ const User = {
     }
 }
 
-const nav = {
-    indicator: $("#nav-left-menu-indicator"),
-    menu: $("#nav-left-menu"),
-    items: {
-        home: $("#nav-left-menu-home"),
-        user: $("#nav-left-menu-user"),
-        admin: $("#nav-left-menu-admin"),
-    },
-    search: {
-        container: $(".search-container"),
-        form: $("#search-form"),
-        input: $("#search-input"),
-        button: $("#search-button")
-    },
-    user: {
-        container: $("#nav-right-user"),
-        head: $("#nav-right-user-head"),
-        name: $("#nav-right-user-name"),
-    },
-    changeIndicator: function (item) {
-        // 取消选中其他项
-        $(this.items.home).removeClass("active");
-        $(this.items.user).removeClass("active");
-        $(this.items.admin).removeClass("active");
-
-        // 计算新项的中心位置
-        var itemPosition = $(item).position();
-        var itemWidth = $(item).outerWidth(true);
-        var itemHeight = $(item).outerHeight(true);
-        var itemCenterPosition = itemPosition.left + (itemWidth / 2);
-
-        // 计算指示器的新位置
-        var indicatorWidth = this.indicator.outerWidth(true);
-        var newPosition = itemCenterPosition - (indicatorWidth / 2);
-
-        // 移动指示器到新位置
-        this.indicator.css("left", newPosition);
-
-        // 选中当前项
-        $(item).addClass("active");
-    },
-    init: function () {
-        //初始化指示条
-        this.changeIndicator(this.items.home);
-
-        this.items.home.click(function () {
-            nav.changeIndicator(nav.items.home);
-        })
-
-        this.items.user.click(function () {
-            nav.changeIndicator(nav.items.user);
-        })
-
-        this.items.admin.click(function () {
-            nav.changeIndicator(nav.items.admin);
-        })
-
-        this.search.input.focus(function () {
-            nav.search.container.addClass("active");
-        })
-
-        this.search.input.blur(function () {
-            nav.search.container.removeClass("active");
-        })
-
-        this.search.form.submit(function (e) {
-            e.preventDefault();
-            nav.search.button.click();
-        })
-
-        this.search.button.click(async function () {
-            if (await User.isLogin()) {
-                var keyword = nav.search.input.val();
-            } else {
-                Qmsg.warning("请先登录")
-            }
-        })
-
-        this.user.head.click(async function () {
-            if (await User.isLogin()) {
-                coco({
-                    title: "提示",
-                    text: "确定要退出登录吗？",
-                    okText: "确定",
-                    cancelText: "取消",
-                    zIndexOfModal: 2995,
-                    zIndexOfMask: 3008,
-                    zIndexOfActiveModal: 3020
-                }).onClose((isOk, cc, done) => {
-                    console.log(cc.closeType);
-                    if (isOk) {
-                        User.logout()
-                    } else {
-                        done();
-                    }
-                });
-            } else {
-                window.open("/login.html?origin=/", "_self")
-            }
-        })
-
-        //异步加载用户信息
-        User.isLogin().then(function (res) {
-            if (res) {
-                nav.user.head.attr("src", User.getHead());
-                User.info.head.attr("src", User.getHead());
-                nav.user.name.text(User.getName());
-                User.info.name.text(User.getName());
-                if (User.isAdmin()) {
-                    nav.items.admin.show();
-                }
-                if (User.isVIP()) {
-                    User.info.vip.attr("src", "./images/icon/VIP-active.svg")
-                }
-                User.loadFollowList()
-            }
-        })
-
-
-    },
-}
-
-nav.init()
-
 const Content = {
-    notice: $("#notice-content"),
-    noticeTIme: $("#notice-time"),
     loadNotice: function () {
+        if (this.noticeData) {
+            $(this.notice).text(this.noticeData.content)
+            $(this.noticeTime).text(getTimeAgo(this.noticeData.publishDate))
+            return
+        }
         Core.Content.getNotice().then(function (res) {
+            Content.noticeData = res
             $(Content.notice).text(res.content)
-            $(Content.noticeTIme).text(getTimeAgo(res.publishDate))
+            $(Content.noticeTime).text(getTimeAgo(res.publishDate))
         })
     },
-    init: function () {
-        this.loadNotice()
+    loadHotTags: async function () {
+        var tags = await Core.Content.getHotTags()
+        for (var i in tags) {
+            if (i < 3) {
+                var tagElement = $(`
+                    <div class="item">
+                        <img class="icon" src="./images/icon/hot-colorful.svg">
+                        <div class="container">
+                            <div class="name">${tags[i].name}</div>
+                            <div class="count">${tags[i].views}次浏览</div>
+                        </div>
+                    </div>
+                `)
+            } else {
+                var tagElement = $(`
+                    <div class="item">
+                        <img class="icon" style="display: hidden">
+                        <div class="container">
+                            <div class="name">${tags[i].name}</div>
+                            <div class="count">${tags[i].views}次浏览</div>
+                        </div>
+                    </div>
+                `)
+            }
+            $("#hot-tags-list").append(tagElement)
+        }
+    },
+    init: function (page) {
+        if (page == "home") {
+            var noticeElement = $(`
+            <div id="notice" class="module">
+                <div class="title">公告
+                    <span id="notice-time" class="time"></span>
+                </div>
+                <div id="notice-content" class="content"></div>
+            </div>`)
+            $("#main-center").append(noticeElement)
+            noticeElement.hide().fadeIn(500);
+            this.notice = $("#notice-content")
+            this.noticeTime = $("#notice-time")
+            this.loadNotice()
+            this.loadHotTags()
+        }
     }
 }
 
-Content.init()
-
 Article = {
-    list: {},
+    list: [],
+    removeSortOrder: function () {
+        $("#sort-order-default").removeClass("active")
+        $("#sort-order-hot").removeClass("active")
+        $("#sort-order-time").removeClass("active")
+    },
+    publishArticle: async function (title, content, tags, outline, images) {
+        if (User.isLogin()) {
+            var id = getCookie("id")
+            var token = getCookie("token")
+            var res = await Core.Article.publishArticle(id, token, title, content, tags, outline, images)
+            if (res.code == 0) {
+                Qmsg.success("发布成功")
+            }
+        }
+    },
+    clear: function () {
+        $("#article-list").empty()
+        this.list = []
+    },
+    modifyLike: function (id) {
+        if (User.isLogin()) {
+            Core.Article.modifyLike(id, getCookie("id"), getCookie("token")).then(function (res) {
+                var article = Article.getArticleModule(id)
+                if (res.code == 0) {
+                    Qmsg.success("点赞成功")
+                    article.find(".likes .count").text(parseInt(article.find(".likes .count").text()) + 1)
+                    article.find(".likes img").attr("src", "./images/icon/like-filling.svg")
+                } else if (res.code == 1) {
+                    Qmsg.success("取消点赞")
+                    article.find(".likes .count").text(parseInt(article.find(".likes .count").text()) - 1)
+                    article.find(".likes img").attr("src", "./images/icon/like.svg")
+                } else {
+                    Qmsg.error("点赞失败")
+                }
+            })
+        } else {
+            Qmsg.warning("请先登录")
+        }
+    },
     openArticle: function (id) {
         window.open(`/article.html?id=${id}`)
     },
-    getArticles: function (list) {
-        return Core.Article.getArticles(list)
+    getArticles: function (list, id, token) {
+        return Core.Article.getArticles(list, id, token)
     },
     getRecommendedArticles: function () {
         return Core.Content.getRecommendedArticles()
@@ -246,13 +210,13 @@ Article = {
     getArticleModule: function (id) {
         return $(`div[articleID=${id}]`)
     },
-    addArticle: function (data) {
+    addArticle: function (data, ignore) {
         //判断文章是否已经添加
-        if (this.list[data.id]) {
-            return;
+        if (!ignore && this.list[data.id]) {
+            return
         }
         this.list[data.id] = data;
-        $("#article-list").append(`
+        var articleElement = $(`
             <div class="article module" articleid=${data.id}>
                     <div class="author">
                         <img class="people-head" src="${data.head}">
@@ -296,6 +260,8 @@ Article = {
                     </div>
                 </div>
             `)
+        $("#article-list").append(articleElement)
+        articleElement.hide().fadeIn(500)
         var article = Article.getArticleModule(data.id)
         if (data.isVIP) {
             article.find(".vip").show()
@@ -321,24 +287,338 @@ Article = {
         if (data.images.length > 3) {
             article.find(".more").show().text("+" + (data.images.length - 3))
         }
+        if (data.liked) {
+            article.find(".likes img").attr("src", "./images/icon/like-filling.svg")
+        }
     },
-    init: async function () {
-        $("#article-list").on("click", ".article .title",function () {
-            //获取当前文章的id
-            var id = $(this).parent().attr("articleid")
-            Article.openArticle(id)
-        })
-
-        var recommendedArticleIDs = await Article.getRecommendedArticles()
-        var recommendedArticles = await Article.getArticles(recommendedArticleIDs)
-        console.log(recommendedArticles)
-        for (let i in recommendedArticles) {
-            this.addArticle(recommendedArticles[i])
+    init: async function (page, noSortOrder) {
+        if (page == "home") {
+            if (!noSortOrder) {
+                var sortOrderElement = $(`
+                    <div id="sort-order" class="module">
+                        <div id="sort-order-default" class="item active">默认</div>
+                        <div id="sort-order-hot" class="item">热门</div>
+                        <div id="sort-order-time" class="item">时间</div>
+                    </div>`)
+                $("#main-center").append(sortOrderElement)
+                sortOrderElement.hide().fadeIn(500)
+                $("#sort-order-default").click(function () {
+                    Article.removeSortOrder()
+                    $(this).addClass("active")
+                })
+            }
+            $("#sort-order-hot").click(function () {
+                Article.removeSortOrder()
+                $(this).addClass("active")
+            })
+            $("#sort-order-time").click(function () {
+                Article.removeSortOrder()
+                $(this).addClass("active")
+            })
+            $("#main-center").append(`<div id="article-list"></div>`)
+            if (this.list.length > 0) {
+                for (let i in this.list) {
+                    this.addArticle(this.list[i], true)
+                }
+                return
+            }
+            var recommendedArticleIDs = await Article.getRecommendedArticles()
+            if (await User.isLogin()) {
+                var id = getCookie("id")
+                var token = getCookie("token")
+                console.log(id, token)
+                var recommendedArticles = await Article.getArticles(recommendedArticleIDs, id, token)
+            } else {
+                var recommendedArticles = await Article.getArticles(recommendedArticleIDs)
+            }
+            for (let i in recommendedArticles) {
+                recommendedArticles[i].top = true
+                this.addArticle(recommendedArticles[i])
+            }
+            Search.searchArticles()
         }
     }
 }
 
-Article.init()
+//Article.init("home")
+
+$("#main-center").on("click", "#article-list .article .title", function () {
+    //获取当前文章的id
+    var id = $(this).parent().attr("articleid")
+    Article.openArticle(id)
+})
+
+$("#main-center").on("click", "#article-list .article .likes img", function () {
+    //获取当前文章的id
+    var id = $(this).parent().parent().parent().attr("articleid")
+    Article.modifyLike(id)
+})
+
+$("#main-center").on("click", "#sort-order .item", function () {
+    $("#sort-order .item").removeClass("active")
+    $(this).addClass("active")
+    Article.clear()
+    if ($(this).attr("id") == "sort-order-default") {
+        Search.page = 1
+        Search.sort = "hot"
+        Search.reverse = false
+        Article.init("home", true)
+        return
+    } else if ($(this).attr("id") == "sort-order-hot") {
+        Search.page = 1
+        Search.sort = "hot"
+        Search.reverse = false
+    } else if ($(this).attr("id") == "sort-order-time") {
+        Search.page = 1
+        Search.sort = "time"
+        Search.reverse = false
+    }
+    Search.searchArticles()
+})
+
+$("#publish-button").click(function () {
+    var title = $("#publish-title").val();
+    var content = $("#publish-content").val();
+    var outline = $("#publish-outline").val();
+    var tags = extractTags($("#publish-tags").val());
+    var images = extractImages($("#publish-images").val());
+    if (title.length < 5) {
+        Qmsg.error("标题长度不能少于5个字符");
+        return;
+    }
+    if (content.length < 10) {
+        Qmsg.error("内容长度不能少于10个字符");
+        return;
+    }
+    if (outline.length < 10) {
+        Qmsg.error("概述长度不能少于10个字符");
+        return;
+    }
+    Article.publishArticle(title, content, tags, outline, images);
+})
+
+const Search = {
+    keyword: "",
+    page: 1,
+    sort: "hot",
+    reverse: false,
+    searchArticles: async function () {
+        var id = getCookie("id");
+        var token = getCookie("token");
+        var articles
+        if (await User.isLogin()) {
+            console.log(id, token)
+            articles = await Core.Search.searchArticles(this.keyword, this.page, this.sort, this.reverse, id, token)
+        } else {
+            articles = await Core.Search.searchArticles(this.keyword, this.page, this.sort, this.reverse)
+        }
+        if (articles.length > 0) {
+            for (let i in articles) {
+                Article.addArticle(articles[i])
+            }
+            $("#article-list").append(`<div class="module" id="article-more">加载更多</div>`)
+        } else {
+            $("#article-list").append(`<div id="article-empty">到底了（；´д｀）ゞ</div>`)
+        }
+    }
+}
+
+$("#main-center").on("click", "#article-more", function () {
+    $(this).remove()
+    Search.page++
+    Search.searchArticles()
+})
+
+const nav = {
+    pages: ["home", "user", "admin"],
+    indicator: $("#nav-left-menu-indicator"),
+    menu: $("#nav-left-menu"),
+    items: {
+        home: $("#nav-left-menu-home"),
+        user: $("#nav-left-menu-user"),
+        admin: $("#nav-left-menu-admin"),
+    },
+    search: {
+        container: $(".search-container"),
+        form: $("#search-form"),
+        input: $("#search-input"),
+        button: $("#search-button")
+    },
+    user: {
+        container: $("#nav-right-user"),
+        head: $("#nav-right-user-head"),
+        name: $("#nav-right-user-name"),
+    },
+    changeIndicator: async function (item) {
+        // 取消选中其他项
+        $(this.items.home).removeClass("active");
+        $(this.items.user).removeClass("active");
+        $(this.items.admin).removeClass("active");
+
+        // 计算新项的中心位置
+        var itemPosition = $(item).position();
+        var itemWidth = $(item).outerWidth(true);
+        var itemHeight = $(item).outerHeight(true);
+        var itemCenterPosition = itemPosition.left + (itemWidth / 2);
+
+        // 计算指示器的新位置
+        var indicatorWidth = this.indicator.outerWidth(true);
+        var newPosition = itemCenterPosition - (indicatorWidth / 2);
+
+        // 移动指示器到新位置
+        this.indicator.css("left", newPosition);
+
+        // 选中当前项
+        $(item).addClass("active");
+
+        $("#main-center").empty();
+
+        $("#hot-tags").hide();
+        $("#hot-tags-list").empty();
+
+        if (item.attr("id") == this.items.home.attr("id")) {
+            setUrlParam("page", "home");
+            $("#hot-tags").show();
+            Content.init("home");
+            Article.init("home");
+        } else if (item.attr("id") == this.items.user.attr("id")) {
+            setUrlParam("page", "user");
+            Content.init("user");
+            autosize($("textarea"))
+        } else if (item.attr("id") == this.items.admin.attr("id")) {
+            setUrlParam("page", "admin");
+            Content.init("admin");
+        }
+    },
+    init: function () {
+        //初始化指示条
+        var page = getUrlParam("page")
+
+        if (this.pages.includes(page)) {
+            this.changeIndicator(this.items[page]);
+        } else {
+            this.changeIndicator(this.items.home);
+        }
+
+        this.items.home.click(function () {
+            nav.changeIndicator(nav.items.home);
+        })
+
+        this.items.user.click(function () {
+            nav.changeIndicator(nav.items.user);
+        })
+
+        this.items.admin.click(function () {
+            nav.changeIndicator(nav.items.admin);
+        })
+
+        this.search.input.focus(function () {
+            nav.search.container.addClass("active");
+        })
+
+        this.search.input.blur(function () {
+            nav.search.container.removeClass("active");
+        })
+
+        this.search.form.submit(function (e) {
+            e.preventDefault();
+            nav.search.button.click();
+        })
+
+        this.search.button.click(async function () {
+            if (await User.isLogin()) {
+                var keyword = nav.search.input.val();
+                Search.keyword = keyword;
+                Qmsg.info("暂不支持搜索哦~")
+            } else {
+                Qmsg.warning("请先登录")
+            }
+        })
+
+        this.user.head.click(async function () {
+            if (await User.isLogin()) {
+                coco({
+                    title: "提示",
+                    text: "确定要退出登录吗？",
+                    okText: "确定",
+                    cancelText: "取消",
+                    zIndexOfModal: 2995,
+                    zIndexOfMask: 3008,
+                    zIndexOfActiveModal: 3020
+                }).onClose((isOk, cc, done) => {
+                    console.log(cc.closeType);
+                    if (isOk) {
+                        User.logout()
+                    } else {
+                        done();
+                    }
+                });
+            } else {
+                window.open("/login.html?origin=/", "_self")
+            }
+        })
+
+        //异步加载用户信息
+        User.isLogin().then(function (res) {
+            if (res) {
+                nav.user.head.attr("src", User.getHead());
+                User.info.head.attr("src", User.getHead());
+                nav.user.name.text(User.getName());
+                User.info.name.text(User.getName());
+                if (User.isAdmin()) {
+                    nav.items.admin.css("visibility", "");
+                }
+                if (User.isVIP()) {
+                    User.info.vip.attr("src", "./images/icon/VIP-active.svg")
+                }
+                User.loadFollowList()
+            }
+        })
+    },
+}
+
+nav.init()
+
+//提取标签
+function extractTags(inputString) {
+    const tags = inputString.replace(/^#+|#+$/g, '').split('#');
+    return tags.filter(tag => tag !== '');
+}
+
+function extractImages(inputString) {
+    return inputString.split('\n').filter(image => image !== '');
+}
+
+//获取url中的参数
+function getUrlParam(name) {
+    var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)"); //构造一个含有目标参数的正则表达式对象
+    var r = window.location.search.substr(1).match(reg); //匹配目标参数
+    if (r != null) return decodeURI(r[2]);
+    return null; //返回参数值
+}
+
+function updateQueryStringParameter(key, value) {
+    var uri = window.location.href
+    if (!value) {
+        return uri;
+    }
+    var re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
+    var separator = uri.indexOf('?') !== -1 ? "&" : "?";
+    if (uri.match(re)) {
+        return uri.replace(re, '$1' + key + "=" + value + '$2');
+    } else {
+        return uri + separator + key + "=" + value;
+    }
+}
+
+//设置url中的参数
+function setUrlParam(key, value) {
+    var newurl = updateQueryStringParameter(key, value)
+    //向当前url添加参数，没有历史记录
+    window.history.replaceState({
+        path: newurl
+    }, '', newurl);
+}
 
 function isSameDay(date1, date2) {
     const d1 = new Date(date1);

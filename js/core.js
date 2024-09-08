@@ -5,6 +5,7 @@ const Core = {
     User: {},
     Content: {},
     Article: {},
+    Search: {},
 }
 
 Core.login = async function (id, password, result) {
@@ -116,16 +117,85 @@ Core.Content.getRecommendedArticles = async function () {
     return $.ajax(settings)
 }
 
-Core.Article.getArticles = async function (list) {
+Core.Content.getHotTags = async function () {
+    var settings = {
+        "url": CoreURL + "content?act=getHotTags",
+        "method": "GET",
+        "timeout": 0,
+    };
+
+    return $.ajax(settings)
+}
+
+Core.Article.getArticles = async function (list, userID, token) {
+    console.log(list, userID, token)
     if (typeof list == "object") {
         var ids = JSON.stringify(list)
     } else {
         var ids = list
     }
+    if (userID && token) {
+        var settings = {
+            "url": CoreURL + "article?act=getArticles&list=" + ids + "&userID=" + userID,
+            "method": "GET",
+            "timeout": 0,
+            "headers": {
+                "Authorization": "Bearer " + token
+            },
+        }
+    } else {
+        var settings = {
+            "url": CoreURL + "article?act=getArticles&list=" + ids,
+            "method": "GET",
+            "timeout": 0,
+        }
+    }
+
+    return $.ajax(settings)
+}
+
+Core.Article.modifyLike = async function (id, userID, token) {
     var settings = {
-        "url": CoreURL + "article?act=getArticles&list=" + ids,
+        "url": CoreURL + "article?act=modifyLike&id=" + id + "&userID=" + userID,
         "method": "GET",
-        "timeout": 0,  
+        "timeout": 0,
+        "headers": {
+            "Authorization": "Bearer " + token
+        },
+    };
+
+    return $.ajax(settings)
+}
+
+Core.Article.publishArticle = async function (id, token, title, content, tags, outline, images) {
+    var settings = {
+        "url": CoreURL + "article?act=publishArticle&id=" + id + "&token=" + token + "&title=" + title + "&content=" + content + "&tags=" + tags + "&outline=" + outline + "&images=" + images,
+        "method": "GET",
+        "timeout": 0,
+        "headers": {
+            "Authorization": "Bearer " + token
+        }
+    };
+
+    return $.ajax(settings)
+}
+
+Core.Search.searchArticles = async function (keyword, page, sort, reverse, id, token) {
+    if (id && token) {
+        var settings = {
+            "url": CoreURL + "search?act=searchArticles&keyword=" + keyword + "&page=" + page + "&sort=" + sort + "&reverse=" + reverse + "&id=" + id,
+            "method": "GET",
+            "timeout": 0,
+            "headers": {
+                "Authorization": "Bearer " + token
+            },
+        }
+    } else {
+        var settings = {
+            "url": CoreURL + "search?act=searchArticles&keyword=" + keyword + "&page=" + page + "&sort=" + sort + "&reverse=" + reverse,
+            "method": "GET",
+            "timeout": 0,
+        };
     }
 
     return $.ajax(settings)

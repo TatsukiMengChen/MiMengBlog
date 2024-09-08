@@ -22,14 +22,14 @@
                 <div class="container">
                     <div id="nav-left-menu-home" class="item">首页</div>
                     <div id="nav-left-menu-user" class="item">我的</div>
-                    <div id="nav-left-menu-admin" class="item" style="display: none;">管理</div>
+                    <div id="nav-left-menu-admin" class="item" style="visibility: hidden">管理</div>
                 </div>
                 <div id="nav-left-menu-indicator"></div>
             </div>
         </div>
         <div id="nav-center">
             <div class="search-container">
-                <form id="search-form">
+                <form id="search-form" autocomplete="off">
                     <input type="text" placeholder="搜索些什么..." id="search-input">
                 </form>
                 <button id="search-button">
@@ -76,22 +76,27 @@
             </div>
         </div>
         <div id="main-center">
-            <div id="notice" class="module">
-                <div class="title">公告
-                    <span id="notice-time" class="time"></span>
-                </div>
-                <div id="notice-content" class="content">暂无</div>
-            </div>
-            <div id="article-list">
-                
+            <div class="module">
+                <input type="text" placeholder="标题" id="publish-title" class="input" autocomplete="off">
+                <input type="text" placeholder="概述" id="publish-outline" class="input" autocomplete="off">
+                <input type="text" placeholder="标签：例如 #标签1 #标签2" id="publish-tags" class="input" autocomplete="off">
+                <textarea type="text" placeholder="封面图，请输入图片链接，每行一个，建议1~3个" id="publish-images" class="input" autocomplete="off"></textarea>
+                <textarea type="text" placeholder="正文，支持Markdown语法" id="publish-content" class="input" autocomplete="off"></textarea>
             </div>
         </div>
-        <div id="main-right"></div>
+        <div id="main-right">
+            <div id="hot-tags" class="module">
+                <div class="title">热门话题</div>
+                <div id="hot-tags-list"></div>
+            </div>
+            <div id="publish-button" class="module">发布文章</div>
+        </div>
     </div>
     <script src="./js/jquery-3.7.1.min.js"></script>
     <script src="./js/Qmsg.min.js"></script>
     <script src="./js/coco-modal.js"></script>
     <script src="./js/core.js"></script>
+    <script src="./js/autosize.min.js"></script>
     <script src="./js/index.js"></script>
 </body>
 

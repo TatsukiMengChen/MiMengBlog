@@ -123,6 +123,14 @@ const nav = {
 
         // 选中当前项
         $(item).addClass("active");
+
+        if (item.attr("id") == this.items.home.attr("id")) {
+            window.open("/?page=home", "_self");
+        } else if (item.attr("id") == this.items.user.attr("id")) {
+            window.open("/?page=user", "_self");
+        } else if (item.attr("id") == this.items.admin.attr("id")) {
+            window.open("/?page=admin", "_self");
+        }
     },
     init: function () {
         //初始化指示条
