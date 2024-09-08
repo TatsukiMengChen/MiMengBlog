@@ -501,8 +501,11 @@ $("#main-center").on("click", ".article .edit", async function () {
         $("#edit-images").val($("#edit-images").val() + article.images[i] + "\n")
     }
     loading.close()
-    $("#edit-update").show()
-    $("#edit-delete").show()
+    Qmsg.success("文章信息加载成功")
+    //$("#edit-update").show()
+    //$("#edit-delete").show()
+    $("#edit-update").fadeIn(500)
+    $("#edit-delete").fadeIn(500)
 })
 
 $("#edit-publish").click(function () {

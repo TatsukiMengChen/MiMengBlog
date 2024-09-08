@@ -277,6 +277,7 @@ async function loadArticle() {
         res = await Core.Article.getContent(urlParams.id)
     }
 
+    $('#main-center .title').text(res.title)
     $('#author-head').attr('src', res.head);
     $('#author-name').text(res.name);
     $('#author-date').text(getTimeAgo(res.updateDate))
