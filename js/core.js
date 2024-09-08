@@ -127,12 +127,23 @@ Core.Content.getHotTags = async function () {
     return $.ajax(settings)
 }
 
-Core.Article.getContent = async function (id) {
-    var settings = {
-        "url": CoreURL + "article?act=getContent&id=" + id,
-        "method": "GET",
-        "timeout": 0,
-    };
+Core.Article.getContent = async function (id, userID, token) {
+    if (userID && token) {
+        var settings = {
+            "url": CoreURL + "article?act=getContent&id=" + id + "&userID=" + userID,
+            "method": "GET",
+            "timeout": 0,
+            "headers": {
+                "Authorization": "Bearer " + token
+            },
+        }
+    } else {
+        var settings = {
+            "url": CoreURL + "article?act=getContent&id=" + id,
+            "method": "GET",
+            "timeout": 0,
+        }
+    }
 
     return $.ajax(settings)
 }

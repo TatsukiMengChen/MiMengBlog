@@ -147,7 +147,7 @@ const nav = {
         this.items.detail.click(function () {
             nav.changeIndicator(nav.items.detail);
         })
-            
+
         this.items.admin.click(function () {
             nav.changeIndicator(nav.items.admin);
         })
@@ -172,6 +172,8 @@ const nav = {
                 Qmsg.warning("请先登录")
             }
         })
+
+        $(".search-container").hide()
 
         this.user.head.click(async function () {
             if (await User.isLogin()) {
@@ -265,64 +267,72 @@ function getURLParams() {
 
 const urlParams = getURLParams();
 
-if (urlParams.id) {
-    var settings = {
-        "url": `${CoreURL}article?act=getContent&id=${urlParams['id']}`,
-        "method": "GET",
-        "timeout": 0
+async function loadArticle() {
+    var userID = getCookie("id")
+    var token = getCookie("token")
+    var res
+    if (userID != "" && token != "") {
+        res = await Core.Article.getContent(urlParams.id, userID, token)
+    } else {
+        res = await Core.Article.getContent(urlParams.id)
     }
 
-    $.ajax(settings).done(function (res) {
-        console.log(res);
-        $('#author-head').attr('src', res.head);
-        $('#author-name').text(res.name);
-        $('#author-date').text(getTimeAgo(res.updateDate))
-        if (res.official) {
-            $('#author-name-container').append('<span class="badge badge-official">官方</span>');
-        }
-        if (res.selected) {
-            $('#author-name-container').append('<span class="badge badge-selected">精选</span>');
-        }
-        Vditor.preview(document.getElementById('content'), res.content,
-            {
-                cdn: '',
-                hljs: {
-                    style: 'github',
-                    lineNumber: true,
-                },
-                theme: {
-                    current: "ant-design"
+    $('#author-head').attr('src', res.head);
+    $('#author-name').text(res.name);
+    $('#author-date').text(getTimeAgo(res.updateDate))
+    if (res.official) {
+        $('#author-name-container').append('<span class="badge badge-official">官方</span>');
+    }
+    if (res.selected) {
+        $('#author-name-container').append('<span class="badge badge-selected">精选</span>');
+    }
+    if (res.liked) {
+        $("#menu-likes-img").attr("src", "./images/icon/like-filling.svg")
+    }
+    $("#menu-hot-count").text(res.views);
+    $("#menu-comments-count").text(res.comments);
+    $("#menu-likes-count").text(res.likes);
+    $("#menu-stars-count").text(res.stars);
+    $("#menu-likes-img").click(function () {
+        if (User.isLogin()) {
+            Core.Article.modifyLike(urlParams.id, getCookie("id"), getCookie("token")).then(function (res) {
+                if (res.code == 0) {
+                    Qmsg.success("点赞成功")
+                    $("#menu-likes-count").text(parseInt($("#menu-likes-count").text()) + 1)
+                    $("#menu-likes-img").attr("src", "./images/icon/like-filling.svg")
+                } else if (res.code == 1) {
+                    Qmsg.success("取消点赞")
+                    $("#menu-likes-count").text(parseInt($("#menu-likes-count").text()) - 1)
+                    $("#menu-likes-img").attr("src", "./images/icon/like.svg")
+                } else {
+                    Qmsg.error("点赞失败")
                 }
             })
-    });
+        } else {
+            Qmsg.warning("请先登录")
+        }
+    })
+    Vditor.preview(document.getElementById('content'), res.content,
+        {
+            cdn: '',
+            hljs: {
+                style: 'github',
+                lineNumber: true,
+            },
+            theme: {
+                current: "ant-design"
+            }
+        })
 }
 
-if (urlParams.account && urlParams.token) {
-    var settings = {
-        "url": `${CoreURL}user?act=validateToken&id=${urlParams.account}`,
-        "method": "GET",
-        "timeout": 0,
-        "headers": {
-            "Authorization": `Bearer ${urlParams['token']}`
-        }
-    }
-
-    $.ajax(settings).done(function (res) {
-        if (res.code == 0) {
-
-        } else {
-
-        }
-    }).fail(function (jqXHR, textStatus, errorThrown) {
-        if (jqXHR.responseJSON.code == 1) {
-            Qmsg.error("登录已过期，请重新登录");
-            //跳转页面 `https://account.mimeng.fun?origin=${encodeURIComponent(window.location.href)}`
-            //location.assign(`https://account.mimeng.fun?origin=${encodeURIComponent(window.location.href)}`);
-
-        } else {
-            console.log("错误信息：", textStatus, errorThrown);
-            Qmsg.error("请求失败，请稍后再试");
-        }
-    });
+if (urlParams.id) {
+    loadArticle()
 }
 
+$("#author-follow").click(function () {
+    Qmsg.info("关注功能暂未开放");
+})
+
+$("#menu-make-comment").click(function () {
+    Qmsg.info("评论功能暂未开放");
+})
