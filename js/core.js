@@ -1,5 +1,5 @@
 //后端url配置,以/结尾
-const CoreURL = "http://localhost:3000/";
+const CoreURL = "https://api.blog.mimeng.fun/";
 
 const Core = {
     User: {},
